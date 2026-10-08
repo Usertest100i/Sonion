@@ -1,0 +1,23 @@
+// Optional QA dependency: npm install --no-save playwright && npx playwright install chromium
+const {chromium}=require(require.resolve('playwright',{paths:[process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES || process.cwd()]}));
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const fs=require('node:fs/promises');
+const os=require('node:os');
+(async()=>{
+  const {createApp}=await import('../src/server.js');await fs.mkdir(path.join(__dirname,'../docs'),{recursive:true});const dir=await fs.mkdtemp(path.join(os.tmpdir(),'relay-browser-'));const server=await createApp({dataDir:dir});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  let browser;
+  try {
+    browser=await chromium.launch({headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1100}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(`http://127.0.0.1:${server.address().port}`);await page.waitForFunction(()=>document.getElementById('stat-active').textContent==='6');
+    const check=async(label,fn)=>{await fn();console.log(`PASS ${label}`);};
+    await check('B01 Desktop dashboard and six map markers',async()=>{assert.equal(await page.locator('.marker').count(),6);assert.ok(await page.locator('#focus').innerText());await page.screenshot({path:path.join(__dirname,'../docs/preview.png'),fullPage:true});});
+    await check('B02 Search and empty state',async()=>{await page.locator('#search').fill('not-a-real-signal');assert.equal(await page.locator('.report').count(),0);assert.match(await page.locator('#report-list').innerText(),/No matching/);await page.locator('#search').fill('');});
+    await check('B03 Report creation and escaped user text',async()=>{await page.locator('#new-report').click();await page.locator('[name=title]').fill('Browser <img src=x onerror=alert(1)>');await page.locator('[name=description]').fill('Fictional browser test');await page.locator('[name=location]').fill('Central plaza');await page.locator('.submit').click();await page.waitForFunction(()=>document.getElementById('stat-active').textContent==='7');assert.equal(await page.locator('#focus img').count(),0);assert.match(await page.locator('.focus-title').innerText(),/<img/);});
+    await check('B04 Team assignment, resolution and reopening',async()=>{await page.locator('#assign-team').selectOption('North crew');await page.locator('#assign').click();await page.waitForFunction(()=>document.getElementById('focus').textContent.includes('Assigned'));assert.match(await page.locator('#teams').innerText(),/1 active/);await page.locator('#resolve').click();await page.waitForFunction(()=>document.getElementById('stat-active').textContent==='6');await page.locator('#resolve').click();await page.waitForFunction(()=>document.getElementById('stat-active').textContent==='7');});
+    await check('B05 JSON export includes created report',async()=>{const downloadPromise=page.waitForEvent('download');await page.locator('#export').click();const download=await downloadPromise;const data=JSON.parse(await fs.readFile(await download.path(),'utf8'));assert.ok(data.reports.some(r=>r.title.includes('Browser <img')));});
+    await check('B06 Phone layout at 390px has no horizontal overflow',async()=>{await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(__dirname,'../docs/mobile.png'),fullPage:true});});
+    await check('B07 Tablet layout at 820px has no horizontal overflow',async()=>{await page.setViewportSize({width:820,height:1100});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));});
+    await check('B08 Failed saves preserve form input; reconnect succeeds without page errors',async()=>{await page.locator('#new-report').click();await page.locator('[name=title]').fill('Keep this input');await page.locator('[name=description]').fill('Connection failure recovery');await page.locator('[name=location]').fill('Market');await page.route('**/api/reports',route=>route.request().method()==='POST'?route.abort():route.continue());await page.locator('.submit').click();await page.waitForFunction(()=>document.getElementById('form-error').textContent.length>0);assert.equal(await page.locator('[name=title]').inputValue(),'Keep this input');await page.unroute('**/api/reports');await page.locator('.submit').click();await page.waitForFunction(()=>!document.getElementById('report-dialog').open);assert.deepEqual(errors,[]);});
+  } finally {if(browser)await browser.close();await new Promise(r=>server.close(r));await fs.rm(dir,{recursive:true,force:true});}
+})().catch(e=>{console.error(e);process.exitCode=1;});
