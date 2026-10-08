@@ -1,0 +1,42 @@
+
+> relay-community-ops@1.0.0 test
+> node --test
+
+✔ 01 Valid reports are normalized (11.628605ms)
+✔ 02 Blank titles are rejected (0.320644ms)
+✔ 03 Oversized descriptions are rejected (0.241534ms)
+✔ 04 Unknown categories are rejected (0.426914ms)
+✔ 05 Fractional reported impact is rejected (0.175234ms)
+✔ 06 Negative reported impact is rejected (0.133401ms)
+✔ 07 Out-of-range urgency is rejected (0.133672ms)
+✔ 08 Nonfinite coordinates are rejected (0.215956ms)
+✔ 09 Map bounds are enforced (0.190947ms)
+✔ 10 Null input is rejected (0.316858ms)
+✔ 11 Priority score saturates at 100 (0.148244ms)
+✔ 12 Increasing urgency raises priority (0.217388ms)
+✔ 13 Score exposes both contributing factors (0.887829ms)
+✔ 14 Ranking puts highest priority first (0.243096ms)
+✔ 15 Assignment requires a recognized team (0.147612ms)
+✔ 16 Resolving clears assignment (0.092048ms)
+✔ 17 API starts with six fictional reports (21.051384ms)
+✔ 18 Create, assign, resolve and persist an audit trail (16.819693ms)
+✔ 19 Cross-origin writes are blocked (1.446311ms)
+✔ 20 Static file allowlist prevents data exposure (4.47653ms)
+✔ 21 Malformed JSON and oversized bodies are rejected (5.363278ms)
+✔ 22 Concurrent creates survive a server restart (23.28328ms)
+✔ 23 Updating an unknown report returns 404 (1.689497ms)
+✔ 24 Invalid updates cannot change an existing report (6.448655ms)
+✔ 25 Disk failure leaves memory intact and the next save can recover (7.813482ms)
+✔ 26 Corrupt and structurally invalid stores fail without overwriting data (3.078162ms)
+✔ 27 Unexpected Host names cannot reach the local API (5.849811ms)
+✔ 28 Equal priorities rank oldest first without mutating input (0.25181ms)
+✔ 29 The 1000-report capacity returns a conflict without writing (18.76035ms)
+✔ 30 User text remains JSON data and cannot inject server-owned fields (3.975515ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 223.681191
