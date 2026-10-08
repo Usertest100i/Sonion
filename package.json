@@ -1,0 +1,17 @@
+{
+  "name": "relay-community-ops",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An explainable community incident coordination demo.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/domain.js && node --check public/app.js && node --check scripts/browser-check.cjs",
+    "test:browser": "node scripts/browser-check.cjs"
+  },
+  "license": "MIT"
+}
